@@ -10,9 +10,6 @@ PASSWORD=""
 API_KEY=""
 EOF
 
-cat > whitelist.json << EOF
-{
-  "allowed_users": [
-  ]
-}
-EOF
+mkdir resources/
+touch resources/users.json
+touch resources/passes.json
