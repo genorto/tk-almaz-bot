@@ -1,8 +1,8 @@
 import requests
-from app.config import API_KEY, API_URL
-from service.utils import format_records
 
-def call_api(reg_number: str) -> str:
+from app.config import API_KEY, API_URL
+
+def call_api(reg_number: str) -> list:
 	params = {"key": API_KEY, "regNumber": reg_number.replace(" ", "").upper()}
 
 	try:
@@ -21,4 +21,4 @@ def call_api(reg_number: str) -> str:
 	if not records:
 		return f"❌ Пропуск не найден."
 
-	return format_records(records)
+	return records

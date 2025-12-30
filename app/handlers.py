@@ -22,6 +22,8 @@ from service.users import (
 	toggle_plate_tracking,
 	is_tracking
 )
+from service.plates import update_all_passes
+from service.utils import format_records
 
 def get_handlers_router() -> Router:
 	router = Router()
@@ -131,8 +133,12 @@ def get_handlers_router() -> Router:
 			await cmd_mainmenu(message, state)
 			return
 		
+		plate = message.text.strip()
+		records = call_api(plate)
+		update_all_passes(plate, records)
+
 		await message.answer(
-			call_api(message.text.strip()),
+			format_records(records),
 			reply_markup=ReplyKeyboardMarkup(
 				keyboard=mainmenu_keyboard,
 				resize_keyboard=True
@@ -163,6 +169,10 @@ def get_handlers_router() -> Router:
 								callback_data=f"toggle_plate:{plate}"
 							)],
 							[InlineKeyboardButton(
+								text="🔍 Проверить",
+								callback_data=f"checkpass:{plate}"
+							),
+							InlineKeyboardButton(
 								text="🚫 Удалить",
 								callback_data=f"delete_plate:{plate}"
 							)]
@@ -253,12 +263,27 @@ def get_handlers_router() -> Router:
 							callback_data=f"toggle_plate:{plate}"
 						)],
 						[InlineKeyboardButton(
+								text="🔍 Проверить",
+								callback_data=f"checkpass:{plate}"
+						),
+						InlineKeyboardButton(
 							text="🚫 Удалить",
 							callback_data=f"delete_plate:{plate}"
 						)]
 					]
 				)
 			)
+
+	@router.callback_query(F.data.startswith("checkpass:"))
+	async def checkpass_plate(query: CallbackQuery) -> None:
+		plate = query.data.split(":", 1)[1]
+
+		await query.answer()
+
+		records = call_api(plate)
+		update_all_passes(plate, records)
+
+		await query.message.answer(format_records(records))
 
 	@router.callback_query(F.data.startswith("delete_plate:"))
 	async def delete_plate(query: CallbackQuery) -> None:

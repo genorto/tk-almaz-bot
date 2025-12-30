@@ -12,4 +12,4 @@ EOF
 
 mkdir resources/
 touch resources/users.json
-touch resources/passes.json
+touch resources/plates.json

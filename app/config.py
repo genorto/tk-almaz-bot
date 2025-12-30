@@ -8,4 +8,4 @@ PASSWORD = os.getenv("PASSWORD")
 API_KEY = os.getenv("API_KEY")
 API_URL = "https://parser-api.com/parser/transport_mos_api"
 USERS_PATH = "resources/users.json"
-PASSES_PATH = "resources/passes.json"
+PLATES_PATH = "resources/plates.json"

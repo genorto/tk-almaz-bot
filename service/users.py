@@ -80,7 +80,7 @@ def toggle_plate_tracking(user_id: int, plate: str) -> bool:
 
 	for i, item in enumerate(plates):
 		current_plate = item.get("plate", item)
-		current_tracking = item.get("tracking", item)
+		current_tracking = item.get("tracking", False)
 		if current_plate == plate:
 			plates[i] = {"plate": plate, "tracking": not current_tracking}
 			users[str(user_id)]["plates"] = plates
@@ -95,9 +95,9 @@ def is_tracking(user_id: int, plate: str) -> bool:
 	users = load_users()
 	plates = get_user_plates(user_id)
 
-	for i, item in enumerate(plates):
+	for item in plates:
 		current_plate = item.get("plate", item)
-		current_tracking = item.get("tracking", item)
+		current_tracking = item.get("tracking", False)
 		if current_plate == plate:
 			return current_tracking
 	return False
