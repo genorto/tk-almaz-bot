@@ -87,4 +87,4 @@ def update_all_passes(plate: str, new_passes: list):
 		if found:
 			continue
 
-		add_pass_to_plate(plate, new_pass):
+		add_pass_to_plate(plate, new_pass)

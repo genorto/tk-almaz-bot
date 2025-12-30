@@ -24,7 +24,7 @@ def format_info(title: str, record: dict) -> list:
 		f"⏳ Тип действия: {record.get('type')}"
 	]
 
-async def send_plate_difference(bot, user_id: int, new_passes: list) -> None:
+async def send_plate_difference(bot, user_id: int, plate: str, new_passes: list) -> None:
 	for new_pass in new_passes:
 		old_passes = get_plate_passes(plate)
 		found = False
@@ -91,7 +91,7 @@ async def check_all_tracking_plates(bot) -> None:
 				try:
 					records = call_api(plate)
 
-					await send_plate_difference(bot, user_id, records)
+					await send_plate_difference(bot, user_id, plate, records)
 
 					update_all_passes(plate, records)
 
