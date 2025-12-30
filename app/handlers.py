@@ -33,7 +33,7 @@ def get_handlers_router() -> Router:
 	]
 
 	mainmenu_keyboard = [
-		[KeyboardButton(text="🔍 Проверить пропуск"), KeyboardButton(text="🚚 Гараж")]
+		[KeyboardButton(text="🔍 Проверить пропуск"), KeyboardButton(text="🚛 Гараж")]
 	]
 
 	garage_keyboard = [
@@ -153,13 +153,13 @@ def get_handlers_router() -> Router:
 			await message.answer("ℹ️ Ваш гараж пуст.")
 
 		else:
-			await message.answer("🚚 Ваш гараж:")
+			await message.answer("🚛 Ваш гараж:")
 
 			for item in plates:
 				plate = item.get("plate", item)
 
 				await message.answer(
-					f"🚚 {plate}",
+					f"🚛 {plate}",
 					reply_markup=InlineKeyboardMarkup(
 						inline_keyboard=[
 							[InlineKeyboardButton(
@@ -189,7 +189,7 @@ def get_handlers_router() -> Router:
 		)
 
 
-	@router.message(F.text == "🚚 Гараж")
+	@router.message(F.text == "🚛 Гараж")
 	async def cmd_garage(message: Message) -> None:
 		if not await check_access(message):
 			return
@@ -253,7 +253,7 @@ def get_handlers_router() -> Router:
 
 		if toggle_plate_tracking(user_id, plate):
 			await query.message.edit_text(
-				f"🚚 {plate}",
+				f"🚛 {plate}",
 				reply_markup=InlineKeyboardMarkup(
 					inline_keyboard=[
 						[InlineKeyboardButton(
