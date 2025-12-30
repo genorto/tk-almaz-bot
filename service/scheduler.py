@@ -2,6 +2,7 @@ import asyncio
 import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+from app.config import CHECKPASS_INTERVAL
 from service.users import load_users
 from service.plates import (
 	add_pass_to_plate,
@@ -108,7 +109,7 @@ def start_scheduler(bot) -> AsyncIOScheduler:
 	scheduler.add_job(
 		check_all_tracking_plates,
 		"interval",
-		hours=12,
+		hours=CHECKPASS_INTERVAL,
 		args=[bot]
 	)
 

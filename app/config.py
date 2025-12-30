@@ -9,3 +9,4 @@ API_KEY = os.getenv("API_KEY")
 API_URL = "https://parser-api.com/parser/transport_mos_api"
 USERS_PATH = "resources/users.json"
 PLATES_PATH = "resources/plates.json"
+CHECKPASS_INTERVAL = 12
