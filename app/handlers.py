@@ -47,7 +47,10 @@ def get_handlers_router() -> Router:
 
 	async def check_access(message: Message) -> bool:
 		if not exists_by_id(message.from_user.id):
-			await message.answer("❌ Доступ запрещён.")
+			await message.answer(
+				"❌ Доступ запрещён.",
+				disable_notification=True	
+			)
 			return False
 		return True
 
@@ -60,7 +63,8 @@ def get_handlers_router() -> Router:
 				reply_markup=ReplyKeyboardMarkup(
 					keyboard=mainmenu_keyboard,
 					resize_keyboard=True
-				)
+				),
+				disable_notification=True
 			)
 
 		else:
@@ -70,13 +74,17 @@ def get_handlers_router() -> Router:
 				reply_markup=ReplyKeyboardMarkup(
 					keyboard=auth_keyboard,
 					resize_keyboard=True
-				)
+				),
+				disable_notification=True
 			)
 
 	@router.message(F.text == "🔐 Авторизация")
 	async def cmd_auth(message: Message, state: FSMContext) -> None:
 		if exists_by_id(message.from_user.id):
-			await message.answer("✅ Вы уже авторизованы!")
+			await message.answer(
+				"✅ Вы уже авторизованы!",
+				disable_notification=True
+			)
 			return
 	
 		await message.answer(
@@ -84,7 +92,8 @@ def get_handlers_router() -> Router:
 			reply_markup=ReplyKeyboardMarkup(
 				keyboard=cancel_keyboard,
 				resize_keyboard=True
-			)
+			),
+			disable_notification=True
 		)
 
 		await state.set_state(BotStates.waiting_for_password)
@@ -99,12 +108,19 @@ def get_handlers_router() -> Router:
 					reply_markup=ReplyKeyboardMarkup(
 						keyboard=mainmenu_keyboard,
 						resize_keyboard=True
-					)
+					),
+					disable_notification=True
 				)
 			else:
-				await message.answer("ℹ️ Вы уже авторизованы.")
+				await message.answer(
+					"ℹ️ Вы уже авторизованы.",
+					disable_notification=True	
+				)
 		else:
-			await message.answer("❌ Неверный пароль. Попробуйте ещё раз.\n")
+			await message.answer(
+				"❌ Неверный пароль. Попробуйте ещё раз.\n",
+				disable_notification=True
+			)
 		await state.clear()
 
 	@router.message(F.text == "🔍 Проверить пропуск")
@@ -118,7 +134,8 @@ def get_handlers_router() -> Router:
 			reply_markup=ReplyKeyboardMarkup(
 				keyboard=cancel_keyboard,
 				resize_keyboard=True
-			)
+			),
+			disable_notification=True
 		)
 		await state.set_state(BotStates.waiting_for_plate)
 
@@ -132,7 +149,7 @@ def get_handlers_router() -> Router:
 			await state.clear()
 			await cmd_mainmenu(message, state)
 			return
-		
+
 		plate = message.text.strip()
 		records = call_api(plate)
 		update_all_passes(plate, records)
@@ -142,7 +159,8 @@ def get_handlers_router() -> Router:
 			reply_markup=ReplyKeyboardMarkup(
 				keyboard=mainmenu_keyboard,
 				resize_keyboard=True
-			)
+			),
+			disable_notification=True
 		)
 		await state.clear()
 
@@ -150,10 +168,16 @@ def get_handlers_router() -> Router:
 		plates = get_user_plates(user_id)
 
 		if not plates:
-			await message.answer("ℹ️ Ваш гараж пуст.")
+			await message.answer(
+				"ℹ️ Ваш гараж пуст.",
+				disable_notification=True
+			)
 
 		else:
-			await message.answer("🚛 Ваш гараж:")
+			await message.answer(
+				"🚛 Ваш гараж:",
+				disable_notification=True
+			)
 
 			for item in plates:
 				plate = item.get("plate", item)
@@ -177,7 +201,8 @@ def get_handlers_router() -> Router:
 								callback_data=f"delete_plate:{plate}"
 							)]
 						]
-					)
+					),
+					disable_notification=True
 				)
 
 		await message.answer(
@@ -185,7 +210,8 @@ def get_handlers_router() -> Router:
 			reply_markup=ReplyKeyboardMarkup(
 				keyboard=garage_keyboard,
 				resize_keyboard=True
-			)
+			),
+			disable_notification=True
 		)
 
 
@@ -207,7 +233,8 @@ def get_handlers_router() -> Router:
 			reply_markup=ReplyKeyboardMarkup(
 				keyboard=cancel_keyboard,
 				resize_keyboard=True
-			)
+			),
+			disable_notification=True
 		)
 		await state.set_state(BotStates.waiting_for_number)
 
@@ -223,9 +250,15 @@ def get_handlers_router() -> Router:
 			return
 			
 		if add_plate_to_user(message.from_user.id, message.text.strip()):
-			await message.answer("✅ Номер добавлен успешно.")
+			await message.answer(
+				"✅ Номер добавлен успешно.",
+				disable_notification=True	
+			)
 		else:
-			await message.answer("❌ Ошибка при добавлении номера.")
+			await message.answer(
+				"❌ Ошибка при добавлении номера.",
+				disable_notification=True
+			)
 		await state.clear()
 		await show_garage(message, message.from_user.id)
 
@@ -240,7 +273,8 @@ def get_handlers_router() -> Router:
 			reply_markup=ReplyKeyboardMarkup(
 				keyboard=mainmenu_keyboard,
 				resize_keyboard=True
-			)
+			),
+			disable_notification=True
 		)
 		await state.clear()
 
@@ -280,10 +314,18 @@ def get_handlers_router() -> Router:
 
 		await query.answer()
 
+		await query.message.answer(
+			"ℹ️ Ваш запрос обрабатывается.",
+		  show_alert=False
+		)
+
 		records = call_api(plate)
 		update_all_passes(plate, records)
 
-		await query.message.answer(format_records(records))
+		await query.message.answer(
+			text=format_records(records),
+			show_alert=False
+		)
 
 	@router.callback_query(F.data.startswith("delete_plate:"))
 	async def delete_plate(query: CallbackQuery) -> None:
