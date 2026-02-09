@@ -3,7 +3,7 @@ import asyncio
 from aiogram import Bot
 
 from service.users import load_users
-from service.plates import (update_all_passes, get_plate_passes)
+from service.plates import update_all_passes, get_plate_passes
 from service.api import call_api
 from service.utils import calculate_remaining_days
 
@@ -32,7 +32,8 @@ def format_title(plate: str, new_pass: dict) -> str | None:
 		else:
 			return
 
-	return f"На ваше ТС {plate} выдан новый пропуск:"
+	if new_pass.get("status") == "Действующий":
+		return f"На ваше ТС {plate} выдан новый пропуск:"
 
 def format_report(plate: str, new_pass: dict) -> str | None:
 	title = format_title(plate, new_pass)

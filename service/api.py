@@ -8,17 +8,21 @@ def call_api(reg_number: str) -> list:
 	try:
 		r = requests.get(API_URL, params=params, timeout=10)
 	except requests.RequestException:
-		return f"❌ Не удалось обратиться к сервису. Попробуйте позже."
+		print(f"❌ Не удалось обратиться к сервису. Попробуйте позже.")
+		return []
 
 	if r.status_code == 400:
-		return f"❌ Ошибка валидации запроса."
+		print(f"❌ Ошибка валидации запроса.")
+		return []
 
 	if r.status_code == 403:
-		return f"❌ Закончились токены."
+		print(f"❌ Закончились токены.")
+		return []
 
 	records = r.json().get("records") or []
 
 	if not records:
-		return f"❌ Пропуск не найден."
+		print(f"❌ Пропуск не найден.")
+		return []
 
 	return records
