@@ -2,6 +2,8 @@ import asyncio
 
 from aiogram import Bot
 
+import time
+
 from service.users import load_users
 from service.plates import update_all_passes, get_plate_passes
 from service.api import call_api
@@ -80,6 +82,8 @@ async def check_tracking_plates(bot) -> None:
 				await send_report(bot, user_id, plate, records)
 
 			update_all_passes(plate, records)
+
+			time.sleep(2)
 
 async def main():
 	bot = Bot(BOT_TOKEN)
