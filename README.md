@@ -1,40 +1,37 @@
-# 🚚 TK ALMAZ BOT
-
-Телеграм-бот для ``ООО ТК «Алмаз»``
+# 💎 TK ALMAZ BOT
 
 ### Функционал
 
-<ul>
-    <li>Проверка пропусков по госномеру</li>
-    <li>Хранение госномеров в "гараже"</li>
-    <li>Отслеживание номеров и их периодическая проверка</li>
-</ul>
+- Проверка пропуска на грузовом транспорте.
+- Периодическая проверка пропусков в "гараже" и уведомление об изменениях.
 
 ### Настройка бота
 
-1. Клонирование репозитория
+1. Клонирование репозитория.
 ```bash
-git clone https://github.com/genorto/tk-almaz-bot.git
+git clone https://github.com/gleb-gorokhov/tk-almaz-bot.git
 cd tk-almaz-bot/
 ```
 
-2. Запуск установщика
+2. Запуск установщика.
 ```bash
 chmod +x ./setup.sh
 ./setup.sh
 ```
 
-3. Запуск бота
+3. Запуск бота.
 ```bash
 source venv/bin/activate
 python3 main.py
 ```
 
+4. Настройка cron.
+```bash
+crontab -e
+0 10 * * * /home/tk-almaz-bot/venv/bin/python3 scheduled_report.py >> /home/cron_log.txt 2>&1
+```
+
 ### Переменные окружения
 
-Требуется задать вручную в файле ``.env``
-<ul>
-    <li>BOT_TOKEN (Telegram @BotFather)</li>
-    <li>PASSWORD</li>
-    <li>API_KEY (https://parser-api.com/parser/transport_mos_api/?key=API_KEY)</li>
-</ul>
+- BOT_TOKEN
+- API_KEY (https://parser-api.com/parser/transport_mos_api)
