@@ -25,13 +25,13 @@ source venv/bin/activate
 python3 main.py
 ```
 
-4. Настройка cron.
+4. Настройка cron. Для примера: 12:00 по МСК.
 ```bash
 crontab -e
-0 10 * * * /home/tk-almaz-bot/venv/bin/python3 scheduled_report.py >> /home/cron_log.txt 2>&1
+0 9 * * * /home/tk-almaz-bot/venv/bin/python3 scheduled_report.py >> /home/cron_log.txt 2>&1
 ```
 
 ### Переменные окружения
 
 - BOT_TOKEN
-- API_KEY (https://parser-api.com/parser/transport_mos_api)
+- API_KEY
