@@ -1,14 +1,19 @@
+from math import ceil
+
 from aiogram import F, Router
+from aiogram.enums import ChatMemberStatus
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
+from aiogram.types import CallbackQuery, ChatMemberUpdated, InlineKeyboardMarkup, Message
 from aiogram.utils.chat_action import ChatActionSender
 
+from config import PLATES_PER_PAGE
 from db.repository import (
     add_plate_to_user,
     add_user,
     delete_plate_from_user,
     get_user_plates,
+    remove_user,
     update_car_licenses,
 )
 from services.formatting import format_licenses
@@ -27,6 +32,11 @@ async def cmd_start(msg: Message) -> None:
         reply_markup=get_menu_keyboard(),
         disable_notification=False,
     )
+
+@router.my_chat_member()
+async def on_bot_blocked(update: ChatMemberUpdated) -> None:
+    if update.chat.type == "private" and update.new_chat_member.status == ChatMemberStatus.KICKED:
+        await remove_user(str(update.chat.id))
 
 @router.callback_query(F.data == "menu")
 async def show_menu(callback: CallbackQuery) -> None:
@@ -65,6 +75,9 @@ async def process_plate_input(msg: Message, state: FSMContext) -> None:
 
 async def _render_garage(user_id: str, page: int) -> tuple[str, InlineKeyboardMarkup]:
     plates = await get_user_plates(user_id)
+    if plates:
+        pages = ceil(len(plates) / PLATES_PER_PAGE)
+        page = min(max(page, 1), pages)
     text = "🚛 Ваш гараж" if plates else "ℹ️ Ваш гараж пуст."
     return text, get_garage_keyboard(plates, page)
 

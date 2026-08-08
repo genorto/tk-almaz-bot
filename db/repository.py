@@ -10,10 +10,27 @@ async def add_user(id: str) -> None:
     await db.db.commit()
 
 async def remove_user(id: str) -> None:
+    async with db.db.execute('''
+        SELECT number FROM users_to_cars WHERE owner = ?
+    ''', (id,)) as cursor:
+        rows = await cursor.fetchall()
+    numbers = [row[0] for row in rows]
+
     await db.db.execute('''
         DELETE FROM users
         WHERE id = ?
     ''', (id,))
+
+    for number in numbers:
+        async with db.db.execute('''
+            SELECT 1 FROM users_to_cars WHERE number = ? LIMIT 1
+        ''', (number,)) as cursor:
+            still_tracked = await cursor.fetchone()
+
+        if not still_tracked:
+            await db.db.execute('''
+                DELETE FROM cars WHERE number = ?
+            ''', (number,))
 
     await db.db.commit()
 

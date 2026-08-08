@@ -1,6 +1,6 @@
 from math import ceil
 
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import CopyTextButton, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from config import PLATES_PER_PAGE
@@ -41,7 +41,7 @@ def get_garage_keyboard(plates: list, page: int) -> InlineKeyboardMarkup:
         builder.row(
             InlineKeyboardButton(
                 text=plate,
-                callback_data="none",
+                copy_text=CopyTextButton(text=plate),
             ),
             InlineKeyboardButton(
                 text="🔍",
@@ -59,6 +59,7 @@ def get_garage_keyboard(plates: list, page: int) -> InlineKeyboardMarkup:
             callback_data=f"garage_page_{page - 1}" if page > 1 else "none",
         ),
         InlineKeyboardButton(text="➕", callback_data="add_plate"),
+        InlineKeyboardButton(text=f"{page}/{pages}", callback_data="none"),
         InlineKeyboardButton(text="🏠", callback_data="menu"),
         InlineKeyboardButton(
             text="➡️",
