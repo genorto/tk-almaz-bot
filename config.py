@@ -20,6 +20,9 @@ if API_KEY is None:
     raise ConfigException("No api key in .env")
 
 API_URL = "https://parser-api.com/parser/transport_mos_api"
+
 PLATES_PER_PAGE = 3
+
+TIMEOUT = 5
 
 db = Database("bot.sqlite")

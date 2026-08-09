@@ -2,7 +2,7 @@ import asyncio
 
 from aiogram import Bot
 
-from config import BOT_TOKEN, db
+from config import BOT_TOKEN, TIMEOUT, db
 from db.repository import get_licenses_for_car, get_tracked_plates, update_car_licenses
 from services.formatting import calculate_remaining_days
 from services.license_api import call_api
@@ -19,27 +19,34 @@ def format_title(old_passes: list, new_pass: dict) -> str | None:
         new_days = calculate_remaining_days(new_pass.get("endDate"))
 
         if old_days > 0 and new_days == 0:
-            return f"На ваше ТС {plate} СЕГОДНЯ истекает срок действия пропуска:"
+            return f"🔔 На ваше ТС {plate} СЕГОДНЯ истекает срок действия пропуска:"
+
+        if new_pass.get("status") == "Действующий" and old_days > 30 and new_days == 30:
+            return f"🔔 Через 30 дней истекает срок действия пропуска на ваше ТС {plate}:"
+
+        if new_pass.get("status") == "Действующий" and old_days > 60 and new_days == 60:
+            return f"🔔 Через 60 дней истекает срок действия пропуска на ваше ТС {plate}:"
 
         old_status = old_pass.get("status")
         new_status = new_pass.get("status")
 
         if old_status == "Действующий" and new_status == "Истек срок действия":
-            return f"На ваше ТС {plate} истек срок действия пропуска:"
-        elif old_status == "Действующий" and new_status == "Аннулирован":
-            return f"На ваше ТС {plate} аннулирован пропуск:"
-        else:
-            return
+            return f"🔔 На ваше ТС {plate} истек срок действия пропуска:"
+
+        if old_status == "Действующий" and new_status == "Аннулирован":
+            return f"🔔 На ваше ТС {plate} аннулирован пропуск:"
+
+        return None
 
     if new_pass.get("status") == "Действующий":
-        return f"На ваше ТС {plate} выдан новый пропуск:"
+        return f"🔔 На ваше ТС {plate} выдан новый пропуск:"
 
 
 def format_report(old_passes: list, new_pass: dict) -> str | None:
     title = format_title(old_passes, new_pass)
 
-    if not title:
-        return
+    if title is None:
+        return None
 
     return "\n".join(
         [
@@ -55,12 +62,13 @@ def format_report(old_passes: list, new_pass: dict) -> str | None:
 
 
 async def send_report(bot: Bot, user_id: str, old_passes: list, new_passes: list) -> None:
-    text = format_report(old_passes, new_passes[0])
+    for new_pass in new_passes:
+        text = format_report(old_passes, new_pass)
 
-    if not text:
-        return
+        if text is None:
+            continue
 
-    await bot.send_message(chat_id=user_id, text=text)
+        await bot.send_message(chat_id=user_id, text=text)
 
 
 async def check_tracked_plates(bot: Bot) -> None:
@@ -79,7 +87,7 @@ async def check_tracked_plates(bot: Bot) -> None:
                 await send_report(bot, owner, old_passes, new_passes)
 
         await update_car_licenses(plate, new_passes)
-        await asyncio.sleep(2)
+        await asyncio.sleep(TIMEOUT)
 
 
 async def main():
