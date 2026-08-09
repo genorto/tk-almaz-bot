@@ -15,13 +15,15 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 if BOT_TOKEN is None:
     raise ConfigException("No bot token in .env")
 
+API_URL = os.getenv("API_URL")
+if API_URL is None:
+    raise ConfigException("No api url in .env")
+
 API_KEY = os.getenv("API_KEY")
 if API_KEY is None:
     raise ConfigException("No api key in .env")
 
-API_URL = "https://parser-api.com/parser/transport_mos_api"
-
-PLATES_PER_PAGE = 3
+PLATES_PER_PAGE = 5
 
 TIMEOUT = 5
 

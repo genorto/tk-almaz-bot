@@ -34,4 +34,5 @@ crontab -e
 ### Переменные окружения
 
 - BOT_TOKEN
+- API_URL
 - API_KEY

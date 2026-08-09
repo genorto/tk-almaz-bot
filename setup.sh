@@ -10,6 +10,7 @@ pip install -r requirements.txt
 if [ ! -f .env ]; then
     cat > .env << EOF
 BOT_TOKEN=""
+API_URL=""
 API_KEY=""
 EOF
 fi
