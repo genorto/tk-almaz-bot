@@ -36,10 +36,10 @@ def _format_license(record: dict) -> str:
     return "\n".join(lines)
 
 
-def format_licenses(records: list) -> str:
+def format_licenses(records: list, plate: str) -> str:
     valid_records = [_format_license(r) for r in records if is_valid(r)]
 
     if not valid_records:
-        return "❌ Активные пропуска не найдены."
+        return f"❌ Активные пропуска для {plate} не найдены."
 
     return "\n\n---\n\n".join(valid_records[:2])

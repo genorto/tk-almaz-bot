@@ -4,7 +4,12 @@ from aiogram import F, Router
 from aiogram.enums import ChatMemberStatus
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, ChatMemberUpdated, InlineKeyboardMarkup, Message
+from aiogram.types import (
+    CallbackQuery,
+    ChatMemberUpdated,
+    InlineKeyboardMarkup,
+    Message,
+)
 from aiogram.utils.chat_action import ChatActionSender
 
 from config import PLATES_PER_PAGE
@@ -54,23 +59,29 @@ async def cmd_check_license(callback: CallbackQuery, state: FSMContext) -> None:
     )
     await callback.answer()
     await state.set_state(CheckLicense.plate)
+    await state.update_data(prompt_message_id=callback.message.message_id)
 
 @router.message(CheckLicense.plate)
 async def process_plate_input(msg: Message, state: FSMContext) -> None:
-    async with ChatActionSender.typing(bot=msg.bot, chat_id=msg.chat.id):
-        plate = msg.text.replace(" ", "").upper()
+    data = await state.get_data()
+    prompt_message_id = data["prompt_message_id"]
+    plate = msg.text.replace(" ", "").upper()
 
+    await msg.delete()
+    await msg.bot.delete_message(chat_id=msg.chat.id, message_id=prompt_message_id)
+
+    async with ChatActionSender.typing(bot=msg.bot, chat_id=msg.chat.id):
         licenses = await call_api(plate)
 
-        await msg.reply(
-            format_licenses(licenses),
+        await msg.answer(
+            format_licenses(licenses, plate),
             disable_notification=False,
         )
-        await msg.answer(
-            "🏠 Меню",
-            reply_markup=get_menu_keyboard(),
-            disable_notification=True,
-        )
+
+    await msg.answer(
+        "🏠 Меню",
+        reply_markup=get_menu_keyboard(),
+    )
     await state.clear()
 
 async def _render_garage(user_id: str, page: int) -> tuple[str, InlineKeyboardMarkup]:
@@ -96,11 +107,15 @@ async def noop(callback: CallbackQuery) -> None:
 
 @router.callback_query(F.data == "cancel")
 async def cancel(callback: CallbackQuery, state: FSMContext) -> None:
+    current_state = await state.get_state()
     await state.clear()
-    await callback.message.edit_text(
-        "🏠 Меню",
-        reply_markup=get_menu_keyboard(),
-    )
+
+    if current_state == AddPlate.plate.state:
+        text, keyboard = await _render_garage(str(callback.from_user.id), 1)
+    else:
+        text, keyboard = "🏠 Меню", get_menu_keyboard()
+
+    await callback.message.edit_text(text, reply_markup=keyboard)
     await callback.answer()
 
 @router.callback_query(F.data == "add_plate")
@@ -111,27 +126,38 @@ async def cmd_add_plate(callback: CallbackQuery, state: FSMContext) -> None:
     )
     await callback.answer()
     await state.set_state(AddPlate.plate)
+    await state.update_data(prompt_message_id=callback.message.message_id)
 
 @router.message(AddPlate.plate)
 async def process_add_plate(msg: Message, state: FSMContext) -> None:
+    data = await state.get_data()
+    prompt_message_id = data["prompt_message_id"]
     plate = msg.text.replace(" ", "").upper()
+
     await add_plate_to_user(str(msg.from_user.id), plate)
-    await state.clear()
+    await msg.delete()
 
     text, keyboard = await _render_garage(str(msg.from_user.id), 1)
-    await msg.answer(text, reply_markup=keyboard)
+    await msg.bot.edit_message_text(
+        text,
+        chat_id=msg.chat.id,
+        message_id=prompt_message_id,
+        reply_markup=keyboard,
+    )
+    await state.clear()
 
 @router.callback_query(F.data.startswith("check:"))
 async def check_garage_plate(callback: CallbackQuery) -> None:
     _, plate, page = callback.data.split(":")
     await callback.answer("Проверяем пропуск...")
+    await callback.message.delete()
 
     async with ChatActionSender.typing(bot=callback.bot, chat_id=callback.message.chat.id):
         licenses = await call_api(plate)
         await update_car_licenses(plate, licenses)
 
         await callback.message.answer(
-            format_licenses(licenses),
+            format_licenses(licenses, plate),
             disable_notification=False,
         )
 
