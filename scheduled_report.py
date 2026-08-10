@@ -1,11 +1,15 @@
 import asyncio
+import logging
 
 from aiogram import Bot
+from aiogram.exceptions import TelegramAPIError
 
 from config import BOT_TOKEN, TIMEOUT, db
 from db.repository import get_licenses_for_car, get_tracked_plates, update_car_licenses
 from services.formatting import calculate_remaining_days
-from services.license_api import call_api
+from services.license_api import LicenseApiError, call_api
+
+logger = logging.getLogger(__name__)
 
 
 def format_title(old_passes: list, new_pass: dict) -> str | None:
@@ -68,7 +72,10 @@ async def send_report(bot: Bot, user_id: str, old_passes: list, new_passes: list
         if text is None:
             continue
 
-        await bot.send_message(chat_id=user_id, text=text)
+        try:
+            await bot.send_message(chat_id=user_id, text=text)
+        except TelegramAPIError:
+            logger.exception("Failed to send report to user %s", user_id)
 
 
 async def check_tracked_plates(bot: Bot) -> None:
@@ -80,7 +87,13 @@ async def check_tracked_plates(bot: Bot) -> None:
 
     for plate, owners in plates_to_owners.items():
         old_passes = await get_licenses_for_car(plate)
-        new_passes = await call_api(plate)
+
+        try:
+            new_passes = await call_api(plate)
+        except LicenseApiError:
+            logger.exception("Failed to fetch licenses for plate %s", plate)
+            await asyncio.sleep(TIMEOUT)
+            continue
 
         if new_passes:
             for owner in owners:
