@@ -19,10 +19,9 @@ from db.repository import (
     delete_plate_from_user,
     get_user_plates,
     remove_user,
-    update_car_licenses,
 )
 from services.formatting import format_licenses
-from services.license_api import call_api
+from services.license_api import LicenseApiError, call_api
 
 from .keyboards import get_cancel_keyboard, get_garage_keyboard, get_menu_keyboard
 from .states import AddPlate, CheckLicense
@@ -71,12 +70,13 @@ async def process_plate_input(msg: Message, state: FSMContext) -> None:
     await msg.bot.delete_message(chat_id=msg.chat.id, message_id=prompt_message_id)
 
     async with ChatActionSender.typing(bot=msg.bot, chat_id=msg.chat.id):
-        licenses = await call_api(plate)
+        try:
+            licenses = await call_api(plate)
+        except LicenseApiError:
+            licenses = None
 
-        await msg.answer(
-            format_licenses(licenses, plate),
-            disable_notification=False,
-        )
+        text = "❌ Не удалось обратиться к сервису. Попробуйте позже." if licenses is None else format_licenses(licenses, plate)
+        await msg.answer(text, disable_notification=False)
 
     await msg.answer(
         "🏠 Меню",
@@ -153,13 +153,13 @@ async def check_garage_plate(callback: CallbackQuery) -> None:
     await callback.message.delete()
 
     async with ChatActionSender.typing(bot=callback.bot, chat_id=callback.message.chat.id):
-        licenses = await call_api(plate)
-        await update_car_licenses(plate, licenses)
+        try:
+            licenses = await call_api(plate)
+        except LicenseApiError:
+            licenses = None
 
-        await callback.message.answer(
-            format_licenses(licenses, plate),
-            disable_notification=False,
-        )
+        text = "❌ Не удалось обратиться к сервису. Попробуйте позже." if licenses is None else format_licenses(licenses, plate)
+        await callback.message.answer(text, disable_notification=False)
 
     text, keyboard = await _render_garage(str(callback.from_user.id), int(page))
     await callback.message.answer(text, reply_markup=keyboard)
