@@ -9,7 +9,7 @@
 
 1. Клонирование репозитория.
 ```bash
-git clone https://github.com/gleb-gorokhov/tk-almaz-bot.git
+git clone https://github.com/genorto/tk-almaz-bot.git
 cd tk-almaz-bot/
 ```
 
