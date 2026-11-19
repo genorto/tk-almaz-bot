@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+import httpx
 from aiogram import Bot
 from aiogram.exceptions import TelegramAPIError
 
@@ -10,6 +11,19 @@ from services.formatting import calculate_remaining_days
 from services.license_api import LicenseApiError, call_api
 
 logger = logging.getLogger(__name__)
+
+
+async def fetch_passes(plate: str) -> list:
+    for attempt in range(3):
+        try:
+            return await call_api(plate)
+        except LicenseApiError as exc:
+            if not isinstance(exc.__cause__, httpx.ConnectTimeout) or attempt == 2:
+                raise
+            logger.warning(
+                "Connection timed out for plate %s; retrying (%s/3)", plate, attempt + 2
+            )
+            await asyncio.sleep(2)
 
 
 def format_title(old_passes: list, new_pass: dict) -> str | None:
@@ -26,10 +40,14 @@ def format_title(old_passes: list, new_pass: dict) -> str | None:
             return f"🔔 На ваше ТС {plate} СЕГОДНЯ истекает срок действия пропуска:"
 
         if new_pass.get("status") == "Действующий" and old_days > 30 and new_days == 30:
-            return f"🔔 Через 30 дней истекает срок действия пропуска на ваше ТС {plate}:"
+            return (
+                f"🔔 Через 30 дней истекает срок действия пропуска на ваше ТС {plate}:"
+            )
 
         if new_pass.get("status") == "Действующий" and old_days > 60 and new_days == 60:
-            return f"🔔 Через 60 дней истекает срок действия пропуска на ваше ТС {plate}:"
+            return (
+                f"🔔 Через 60 дней истекает срок действия пропуска на ваше ТС {plate}:"
+            )
 
         old_status = old_pass.get("status")
         new_status = new_pass.get("status")
@@ -65,7 +83,9 @@ def format_report(old_passes: list, new_pass: dict) -> str | None:
     )
 
 
-async def send_report(bot: Bot, user_id: str, old_passes: list, new_passes: list) -> None:
+async def send_report(
+    bot: Bot, user_id: str, old_passes: list, new_passes: list
+) -> None:
     for new_pass in new_passes:
         text = format_report(old_passes, new_pass)
 
@@ -89,7 +109,7 @@ async def check_tracked_plates(bot: Bot) -> None:
         old_passes = await get_licenses_for_car(plate)
 
         try:
-            new_passes = await call_api(plate)
+            new_passes = await fetch_passes(plate)
         except LicenseApiError:
             logger.exception("Failed to fetch licenses for plate %s", plate)
             await asyncio.sleep(TIMEOUT)
